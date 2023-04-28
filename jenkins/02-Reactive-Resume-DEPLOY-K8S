@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    environment {
+       KC = credentials('KUBECONFIG')
+       VERSION = "3.6.19"
+       PRENOM = 'alexandre'
+    }
+    stages {
+        stage('PollSCM') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: 'alexandre']],
+                    userRemoteConfigs: [[url: 'https://github.com/AlexandreDomont/Reactive-Resume.git']])
+                script {
+                    tags = sh(script: "git tag | tail -5 | sort -r", returnStdout: true).trim()
+                }
+            }
+        }
+
+        stage('CHOICE TAG') {
+            steps {
+                script {
+                    def tag_response = input message: 'Quel tag doit être déployé',
+                            parameters: [choice(choices: "${tags}",  description: 'TAG', name: '')]
+                    env.tag_response = tag_response
+                }
+
+            }
+        }
+
+        stage ('echo choose') {
+            steps {
+                echo "I choose: '${tag_response}'"
+            }
+        }
+        
+        stage ('kube deploy')
+        {
+            steps {
+                withCredentials([file(credentialsId: 'KUBECONFIG', variable: 'KUBECRED')]) {
+                    sh 'export KUBECONFIG=$KUBECRED'
+                    sh 'kubectl set image deployment.apps/server server=aldodockerhub/server-cv-${PRENOM}:${tag_response}'
+                    sh 'kubectl set image deployment.apps/client client=aldodockerhub/client-cv-${PRENOM}:${tag_response}'
+                }    
+            }
+        }
+    }    
+}
