@@ -1,0 +1,52 @@
+def registryProjet='registry.hub.docker.com/aldodockerhub'
+def client
+def server
+def PRENOM = 'alexandre'
+
+pipeline {
+    agent any
+    
+    stages {
+        stage ('Git clone APP')
+        {
+            steps {
+                checkout scmGit(
+                    branches: [[name: 'alexandre']],
+                    userRemoteConfigs: [[url: 'https://github.com/AlexandreDomont/Reactive-Resume.git']])
+            }   
+        }
+        stage ('GET TAG_NAME')
+        {
+            steps {
+                script { 
+                    TAG_NAME = sh(returnStdout: true, script: "git tag --contains | tail -1").trim() 
+                    echo "N° du TAG : $TAG_NAME"
+                }
+            }
+        }
+        stage ('Build image Client APP' )
+        {
+            steps {
+                script { client = docker.build("${registryProjet}/client-cv-$PRENOM:$TAG_NAME", "-f client/Dockerfile-4 .") }
+            }
+        }
+
+        stage ('Build image Server APP' )
+        {
+            steps {
+                script { server = docker.build("${registryProjet}/server-cv-$PRENOM:$TAG_NAME", "-f server/Dockerfile-4 .") }
+            }
+        }
+         stage ('Push img Dockerhub' ) {
+             steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'DOCKERHUB') {
+                    server.push()
+                    client.push()
+                    }
+                }
+             }    
+         }
+        
+    }
+}
