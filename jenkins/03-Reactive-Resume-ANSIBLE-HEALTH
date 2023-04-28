@@ -1,0 +1,23 @@
+pipeline {
+    agent any
+    
+    environment {
+        http_srv="j4.59817021-395e-49e8-a551-a287627d20be.nodes.k8s.fr-par.scw.cloud"
+    }
+  
+    stages {
+        stage('PollSCM') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: 'master']],
+                    userRemoteConfigs: [[url: 'https://github.com/AlexandreDomont/ansible-health.git']])
+               
+            }
+        }
+        stage('Ansible'){
+            steps {
+                ansiblePlaybook(playbook: 'playbook.yml', extras: '-e http_srv=$http_srv', colorized: true)
+            }
+        }
+    }
+}
