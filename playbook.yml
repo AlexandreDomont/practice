@@ -1,0 +1,34 @@
+---
+- name: "Checkup app"
+  hosts: localhost
+  connection: local
+  gather_facts: no # pour manipuler ansible_nodename
+  
+  vars :
+     http_srv: j4.59817021-395e-49e8-a551-a287627d20be.nodes.k8s.fr-par.scw.cloud 
+
+  tasks:
+    - name: Wait HTTP Port is accessible
+      wait_for:
+        host: "{{ http_srv }}"
+        port: 30000
+        timeout: 5
+
+    - name: Ensure App is responding
+      uri:
+        url: http://{{ http_srv }}:30000
+        return_content: no
+        status_code: 200
+      register: result
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: result
+
+    - name: Check that returns is within expectation
+      ansible.builtin.assert:
+        that:
+          - result is defined
+          - result.failed is defined and not result.failed
+          - result.status is defined and result.status == 200
+
