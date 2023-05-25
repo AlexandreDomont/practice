@@ -5,7 +5,7 @@
   gather_facts: no # pour manipuler ansible_nodename
   
   vars :
-     http_srv: j4.59817021-395e-49e8-a551-a287627d20be.nodes.k8s.fr-par.scw.cloud 
+     http_srv: j4.c0b75c4e-7023-4ffb-bd90-5c4a67db3c2f.nodes.k8s.fr-par.scw.cloud
 
   tasks:
     - name: Wait HTTP Port is accessible
